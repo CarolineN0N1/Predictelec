@@ -25,11 +25,12 @@ cd "$(dirname "$0")/.."
 PROJECT_DIR="$(pwd)"
 LOG_DIR="/opt/predictelec/shared/logs"
 LOG_FILE="$LOG_DIR/maj_prevision.log"
+LOG_FILE_LOCK="$LOG_DIR/maj_prevision_lock.log"
 
 mkdir -p "$LOG_DIR"
 
 if [ -f "$LOCK_FILE" ]; then
-    echo "Script déjà en cours d'exécution." >> "$LOG_FILE"
+    echo "$(date +"%Y-%m-%d %T") : Script MAJ_PREVISION déjà en cours d'exécution " >> "$LOG_FILE_LOCK" 2>&1
     exit 1
 fi
 

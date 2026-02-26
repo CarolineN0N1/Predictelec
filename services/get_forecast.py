@@ -158,8 +158,9 @@ def get_forecast_parameter(coverage_ids,parameter,df,height):
                     print(f"Failed to retrieve forecast for station {row['id_station']} at {date}")
                 date_dict[date] = parameter_dict
             stations_dict[row["id_station"]] = date_dict
-            #uniquement pour les tests : limiter à 2 stations pour ne pas faire trop de requêtes à l'API Météo France
-            #j+=1
+            if os.getenv('MODE') == "DEV":
+                #uniquement pour les tests : limiter à 2 stations pour ne pas faire trop de requêtes à l'API Météo France
+                j+=1
     return stations_dict
 
 def convert_to_df(forecast_vent, forecast_rayonnement):

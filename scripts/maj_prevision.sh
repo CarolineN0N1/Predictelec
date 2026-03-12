@@ -17,19 +17,20 @@ fi
 set +e
 
 # Empêche plusieurs exécutions en même temps
-LOCK_FILE="/tmp/maj_structures.lock"
+LOCK_FILE="/tmp/maj_prevision.lock"
 
 # Aller dans le dossier parent du dossier du script
 cd "$(dirname "$0")/.."
 
 PROJECT_DIR="$(pwd)"
 LOG_DIR="/opt/predictelec/shared/logs"
-LOG_FILE="$LOG_DIR/maj_structures.log"
+LOG_FILE="$LOG_DIR/maj_prevision.log"
+LOG_FILE_LOCK="$LOG_DIR/maj_prevision_lock.log"
 
 mkdir -p "$LOG_DIR"
 
 if [ -f "$LOCK_FILE" ]; then
-    echo "Script déjà en cours d'exécution." >> "$LOG_FILE"
+    echo "$(date +"%Y-%m-%d %T") : Script MAJ_PREVISION déjà en cours d'exécution " >> "$LOG_FILE_LOCK" 2>&1
     exit 1
 fi
 
@@ -38,11 +39,11 @@ touch "$LOCK_FILE"
 trap "rm -f $LOCK_FILE" EXIT
 
 echo "----------------------------------------" >> "$LOG_FILE"
-echo "Début MAJ_STRUCTURES : $(date)" >> "$LOG_FILE"
+echo "Début MAJ_PREVISION : $(date)" >> "$LOG_FILE"
 
 # Exécution du job 
 # ajout --no-deps pour ne pas relancer postgres
-docker compose -f "$PROJECT_DIR/docker-compose.yml" run --rm --no-deps app MAJ_STRUCTURES >> "$LOG_FILE" 2>&1
+docker compose -f "$PROJECT_DIR/docker-compose.yml" run --rm --no-deps app MAJ_PREVISION >> "$LOG_FILE" 2>&1
 EXIT_CODE=$?
 
 #stop le script si erreur
@@ -52,15 +53,15 @@ END_TIME=$(date)
 
 if [ $EXIT_CODE -ne 0 ]; then
 	#on log l'erreur
-	echo "Erreur MAJ_STRUCTURES le $END_TIME : code=$EXIT_CODE" >> "$LOG_FILE"
+	echo "Erreur MAJ_PREVISION le $END_TIME : code=$EXIT_CODE" >> "$LOG_FILE"
 	#envoie de l'erreur
-	    if [ -z "$ALERT_EMAIL" ]; then
+    if [ -z "$ALERT_EMAIL" ]; then
         echo "ALERT_EMAIL non définie !" >> "$LOG_FILE"
     else
-        echo "Erreur MAJ_STRUCTURES le $END_TIME" | mail -s "ERREUR PREDICTELEC MAJ_STRUCTURES" "$ALERT_EMAIL"
+        echo "Erreur MAJ_PREVISION le $END_TIME" | mail -s "ERREUR PREDICTELEC MAJ_PREVISION" "$ALERT_EMAIL"
     fi
 else
-	echo "Fin MAJ_STRUCTURES : $END_TIME" >> "$LOG_FILE"
+	echo "Fin MAJ_PREVISION : $END_TIME" >> "$LOG_FILE"
 fi
 
 echo "" >> "$LOG_FILE"

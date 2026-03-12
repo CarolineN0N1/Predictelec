@@ -2,7 +2,6 @@ from api.api_meteo import get_valid_token
 import requests
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
-import dotenv
 import os
 from db.base import Database
 import pandas as pd
@@ -156,47 +155,47 @@ def get_forecast_parameter(coverage_ids,parameter,df,J_plus_i):
     '''
     time_steps = get_time_steps(coverage_ids[parameter],J_plus_i)
     if time_steps:
-        # j=0
+        j=0
         i = 0
         stations_dict = {}
         for index, row in df.iterrows():
-            # if j < 1:
-            date_dict = {}
-            for date in time_steps:
-                parameter_dict = {}
-                i+=1
-                if i >=98:
-                    time.sleep(60) #attente pour ne pas sursolliciter le serveur : limite de 100 requêtes par minute
-                    i=0
-                latitude = row["station_latitude"]
-                longitude = row["station_longitude"]
-                if parameter == "vent":
-                    height = "10"
-                    forecast_url = f"https://public-api.meteofrance.fr/public/arpege/1.0/wcs/MF-NWP-GLOBAL-ARPEGE-025-GLOBE-WCS/GetCoverage?service=WCS&version=2.0.1&coverageid={coverage_ids['vent']}&subset=time%28{date}%29%26subset%3Dheight%28{height}%29%26subset%3Dlat%28{latitude}%29%26subset%3Dlong%28{longitude}%29&format=application%2Fwmo-grib"
-                elif parameter == "rayonnement":
-                    forecast_url = f"https://public-api.meteofrance.fr/public/arpege/1.0/wcs/MF-NWP-GLOBAL-ARPEGE-025-GLOBE-WCS/GetCoverage?service=WCS&version=2.0.1&coverageid={coverage_ids['rayonnement']}&subset=time%28{date}%29%26subset%3Dlat%28{latitude}%29%26subset%3Dlong%28{longitude}%29&format=application%2Fwmo-grib"
-
-                response = requests.get(forecast_url, headers=meteo_header())
-                if response.status_code == 200:
-                    root = ET.fromstring(response.text)
-                    ns = {
-                        "gml": "http://www.opengis.net/gml/3.2",
-                    }
-                    tuple_list = root.find(".//gml:tupleList", ns)
-                    raw = tuple_list.text.strip()
-                    value = float(raw)
+            if j < 1:
+                date_dict = {}
+                for date in time_steps:
+                    parameter_dict = {}
+                    i+=1
+                    if i >=98:
+                        time.sleep(60) #attente pour ne pas sursolliciter le serveur : limite de 100 requêtes par minute
+                        i=0
+                    latitude = row["station_latitude"]
+                    longitude = row["station_longitude"]
                     if parameter == "vent":
-                        parameter_dict["coverage_id_vitesse_vent"] = coverage_ids['vent']
-                        parameter_dict["vitesse_vent"] = value
+                        height = "10"
+                        forecast_url = f"https://public-api.meteofrance.fr/public/arpege/1.0/wcs/MF-NWP-GLOBAL-ARPEGE-025-GLOBE-WCS/GetCoverage?service=WCS&version=2.0.1&coverageid={coverage_ids['vent']}&subset=time%28{date}%29%26subset%3Dheight%28{height}%29%26subset%3Dlat%28{latitude}%29%26subset%3Dlong%28{longitude}%29&format=application%2Fwmo-grib"
                     elif parameter == "rayonnement":
-                        parameter_dict["coverage_id_rayonnement_solaire"] = coverage_ids['rayonnement']
-                        parameter_dict["rayonnement_solaire"] = value
-                    print(f"Successfully retrieved {parameter} forecast for station {row['id_station']} at {date}")
-                else:
-                    print(f"Failed to retrieve {parameter} forecast for station {row['id_station']} at {date}")
-                date_dict[date] = parameter_dict
-            stations_dict[row["id_station"]] = date_dict
-            # j+=1
+                        forecast_url = f"https://public-api.meteofrance.fr/public/arpege/1.0/wcs/MF-NWP-GLOBAL-ARPEGE-025-GLOBE-WCS/GetCoverage?service=WCS&version=2.0.1&coverageid={coverage_ids['rayonnement']}&subset=time%28{date}%29%26subset%3Dlat%28{latitude}%29%26subset%3Dlong%28{longitude}%29&format=application%2Fwmo-grib"
+
+                    response = requests.get(forecast_url, headers=meteo_header())
+                    if response.status_code == 200:
+                        root = ET.fromstring(response.text)
+                        ns = {
+                            "gml": "http://www.opengis.net/gml/3.2",
+                        }
+                        tuple_list = root.find(".//gml:tupleList", ns)
+                        raw = tuple_list.text.strip()
+                        value = float(raw)
+                        if parameter == "vent":
+                            parameter_dict["coverage_id_vitesse_vent"] = coverage_ids['vent']
+                            parameter_dict["vitesse_vent"] = value
+                        elif parameter == "rayonnement":
+                            parameter_dict["coverage_id_rayonnement_solaire"] = coverage_ids['rayonnement']
+                            parameter_dict["rayonnement_solaire"] = value
+                        print(f"Successfully retrieved {parameter} forecast for station {row['id_station']} at {date}")
+                    else:
+                        print(f"Failed to retrieve {parameter} forecast for station {row['id_station']} at {date}")
+                    date_dict[date] = parameter_dict
+                stations_dict[row["id_station"]] = date_dict
+            j+=1
         return stations_dict
     else:
         print(f"Time steps for {parameter} is empty.")

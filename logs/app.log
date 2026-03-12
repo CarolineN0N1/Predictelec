@@ -105,3 +105,24 @@
 2026-03-12 13:25:28,177 [ERROR] services.get_forecast_new - Erreur lors de la récupération des prévisions J+3 : ('Connection aborted.', ConnectionResetError(10054, 'Une connexion existante a dû être fermée par l’hôte distant', None, 10054, None))
 2026-03-12 13:25:28,178 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+4
 2026-03-12 13:26:43,051 [ERROR] services.get_forecast_new - Erreur lors de la récupération des prévisions J+4 : ('Connection aborted.', ConnectionResetError(10054, 'Une connexion existante a dû être fermée par l’hôte distant', None, 10054, None))
+2026-03-12 14:11:52,356 [INFO] services.get_forecast_new - --- Mise à jour des prévisions météorologiques le 2026-03-12T14:11:52.355968 ---
+
+2026-03-12 14:11:52,424 [INFO] services.get_forecast_new - Suppression des prévisions du jour
+2026-03-12 14:11:52,428 [INFO] services.get_forecast_new - Prévisions du jour supprimées avec succès
+2026-03-12 14:11:52,428 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+1
+2026-03-12 14:13:19,368 [INFO] services.get_forecast_new - --- Mise à jour des prévisions météorologiques le 2026-03-12T14:13:19.368000 ---
+
+2026-03-12 14:13:19,429 [INFO] services.get_forecast_new - Suppression des prévisions du jour
+2026-03-12 14:13:19,432 [INFO] services.get_forecast_new - Prévisions du jour supprimées avec succès
+2026-03-12 14:13:19,432 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+1
+2026-03-12 14:13:39,257 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+2
+2026-03-12 14:13:47,953 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+3
+2026-03-12 14:13:51,837 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+4
+2026-03-12 14:22:09,429 [INFO] services.get_forecast_new - --- Mise à jour des prévisions météorologiques le 2026-03-12T14:22:09.429781 ---
+
+2026-03-12 14:22:09,480 [INFO] services.get_forecast_new - Suppression des prévisions du jour
+2026-03-12 14:22:09,482 [INFO] services.get_forecast_new - Prévisions du jour supprimées avec succès
+2026-03-12 14:22:09,482 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+1
+2026-03-12 14:22:27,978 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+2
+2026-03-12 14:22:35,817 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+3
+2026-03-12 14:22:39,795 [INFO] services.get_forecast_new - Rafraîchissement des prévisions J+4

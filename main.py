@@ -8,8 +8,9 @@ from services.maj_meteo import get_save_meteo_hier as maj_meteo_quotidien
 from services.maj_meteo import import_meteo_previous_month as maj_meteo_mois_precedent
 from services.maj_production import get_save_production as maj_production_mois_precedent
 from services.get_forecast_new import update_forecast_db
-from db.base import Database
 import os
+import dotenv
+dotenv.load_dotenv(dotenv_path=".env.local")
 
 def main(action=None):
     print(f"Action donnée : {action}")
@@ -68,24 +69,20 @@ def main(action=None):
         maj_meteo_mois_precedent()
         refresh_views()        
 
-    elif action == "GET_FORECAST":
+    elif action == "MAJ_PREVISION":
         print("Récupération des prévisions météorologiques...")
         update_forecast_db()
 
 if __name__ == "__main__":
-    #debug
-    #main("INIT")
-    #main("MAJ_STRUCTURES")
-    #main("MAJ_PROD")
-    #main("MAJ_METEO")
-    #main("MAJ_METEO_PREC") 
-    main("GET_FORECAST")
+    if os.getenv('MODE') == "DEV":
+        #debug
+        #main("INIT")
+        #main("MAJ_STRUCTURES")
+        #main("MAJ_PROD")
+        #main("MAJ_METEO")
+        #main("MAJ_METEO_PREC") 
+        main("MAJ_PREVISION")
 
-# db = Database(
-#         host=os.getenv("DB_HOST"),
-#         dbname=os.getenv("DB_NAME"),
-#         user=os.getenv("DB_USER"),
-#         password=os.getenv("DB_PASSWORD"),
-#         port=os.getenv("DB_PORT"),
-#     )
-# db.create_forecast_table()
+    if os.getenv('MODE') == "PROD":
+         #prod
+         main()

@@ -9,11 +9,13 @@ import requests
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 import dotenv
+import io
 import os
 from db.base import Database
 import pandas as pd
 import time
 from models.meteo import Meteo
+from models.station import Station
 
 dotenv.load_dotenv()
 
@@ -21,12 +23,20 @@ def meteo_header():
     '''
     Récupère un token d'authentification valide pour l'API Météo France et retourne les headers à utiliser pour les requêtes.
     '''
-    # TOKEN = get_valid_token()
-    TOKEN = os.getenv("TOKEN_METEO_FRANCE")
+    if os.getenv('MODE') == "PROD":
+        TOKEN = get_valid_token()
     if not TOKEN:
         raise ValueError("Pas de TOKEN METEO_FRANCE valide généré.")
     HEADERS = {"Authorization": f"Bearer {TOKEN}"}
     return HEADERS
+
+def maj_prevision():
+    '''
+    Récupère les prévisions météorologiques pour les stations météo associées à une centrale et les enregistre en base de données.
+    '''
+    coverage_ids = get_coverage_ids()
+    print("coverage_ids:", coverage_ids)
+    get_forecast_stations(coverage_ids,height=10)
 
 def get_coverage_ids():
     '''
@@ -35,10 +45,23 @@ def get_coverage_ids():
     weather_parameters = {"vent": "Force du vent en niveaux hauteur.",
                           "rayonnement": "Flux solaire"}
     capabilities_url = "https://public-api.meteofrance.fr/public/arpege/1.0/wcs/MF-NWP-GLOBAL-ARPEGE-025-GLOBE-WCS/GetCapabilities?service=WCS&version=2.0.1&language=fre"
+    #print("meteo_header():",meteo_header())
     response = requests.get(capabilities_url,headers=meteo_header())
-    with open("capabilities.xml", "w", encoding="utf-8") as f:
-        f.write(response.text)
+
+    if response.status_code != 200:
+        print(f"Failed to retrieve capabilities: {response.status_code},response: {response.text}")
+        return None    
     if response.status_code == 200:
+        #debug : sauvegarder la réponse XML dans un fichier pour l'inspecter
+        #with open("capabilities.xml", "w", encoding="utf-8") as f:
+        #    f.write(response.text)
+        #test avec read_xml pour extraire les CoverageSummary et leurs CoverageId
+        #df=pd.read_xml(io.StringIO(response.text), xpath=".//wcs:CoverageSummary", namespaces={"wcs": "http://www.opengis.net/wcs/2.0", "ows": "http://www.opengis.net/ows/2.0"})
+        #df2=pd.read_xml(io.StringIO(response.text))
+        #print(df.head())
+        #print(df.columns.tolist())
+        #print(df2.head())
+        #print(df2.columns.tolist())
         root = ET.fromstring(response.text)
         ns = {
             "wcs": "http://www.opengis.net/wcs/2.0",
@@ -103,13 +126,15 @@ def get_forecast_parameter(coverage_ids,parameter,df,height):
     j=0
     stations_dict = {}
     for index, row in df.iterrows():
+        # limiter à 2 stations pour les tests pour ne pas faire trop de requêtes à l'API Météo France
         if j<2:
             date_dict = {}
             for date in time_steps:
                 parameter_dict = {}
                 i+=1
-                if i >=98:
-                    time.sleep(10) #attente pour ne pas sursolliciter le serveur : limite de 100 requêtes par minute
+                if i >=100:
+                    print("Attente de 60 secondes pour respecter la limite de 100 requêtes par minute de l'API Météo France...")
+                    time.sleep(60) #attente pour ne pas sursolliciter le serveur : limite de 100 requêtes par minute
                     i=0
                 latitude = row["station_latitude"]
                 longitude = row["station_longitude"]
@@ -136,7 +161,9 @@ def get_forecast_parameter(coverage_ids,parameter,df,height):
                     print(f"Failed to retrieve forecast for station {row['id_station']} at {date}")
                 date_dict[date] = parameter_dict
             stations_dict[row["id_station"]] = date_dict
-            j+=1
+            if os.getenv('MODE') == "DEV":
+                #uniquement pour les tests : limiter à 2 stations pour ne pas faire trop de requêtes à l'API Météo France
+                j+=1
     return stations_dict
 
 def convert_to_df(forecast_vent, forecast_rayonnement):
@@ -185,15 +212,22 @@ def get_forecast_stations(coverage_ids,height):
         password=os.getenv('DB_PASSWORD'),        
         port=os.getenv('DB_PORT')
     )
-    db.connect()
-    query = "select sc.id_station, s.station_latitude, s.station_longitude, s.mesure_vent, s.mesure_rayonnement from stations_centrales AS sc JOIN stations AS s ON sc.id_station = s.id_station"
-    results = db.fetch_all(query)
-    df = pd.DataFrame(results, columns=["id_station", "station_latitude", "station_longitude", "mesure_vent", "mesure_rayonnement"])
-    df_vent = df[df["mesure_vent"] == True].copy()
-    df_rayonnement = df[df["mesure_rayonnement"] == True].copy()
-    forecast_vent = get_forecast_parameter(coverage_ids,"vent",df_vent,height)
-    forecast_rayonnement = get_forecast_parameter(coverage_ids,"rayonnement",df_rayonnement,height)
-    df_forecast = convert_to_df(forecast_vent, forecast_rayonnement)
-    meteo = Meteo()
-    meteo.save_forecast(df_forecast,db.conn)
+    station = Station()
+    try:
+        db.connect()
+        df = station.getlistStationUtile(db.conn)
+        #query = "select sc.id_station, s.station_latitude, s.station_longitude, s.mesure_vent, s.mesure_rayonnement from stations_centrales AS sc JOIN stations AS s ON sc.id_station = s.id_station"
+        #results = db.fetch_all(query)
+        #df = pd.DataFrame(results, columns=["id_station", "station_latitude", "station_longitude", "mesure_vent", "mesure_rayonnement"])
+        df_vent = df[df["mesure_vent"] == True].copy()
+        df_rayonnement = df[df["mesure_rayonnement"] == True].copy()
+        forecast_vent = get_forecast_parameter(coverage_ids,"vent",df_vent,height)
+        forecast_rayonnement = get_forecast_parameter(coverage_ids,"rayonnement",df_rayonnement,height)
+        df_forecast = convert_to_df(forecast_vent, forecast_rayonnement)
+        meteo = Meteo()
+        meteo.save_forecast(df_forecast,db.conn)
+    except Exception as e:
+        print(f"Error connecting to database: {e}")
+        return
+    
     

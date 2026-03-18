@@ -4,7 +4,7 @@
 # 3. Récupérer les lat et lon de chaque station météo associée à une centrale
 # 4. Récupérer avec l'API GetCoverage les prévisions de vitesse de vent et d'ensoleillement à partir de la date du jour aux points correspondants à chaque station météo associée à une centrale.
 
-from api.api_meteo import get_valid_token
+from api.api_meteo import get_valid_token,get_valid_token_debugwindows
 import requests
 from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
@@ -25,6 +25,8 @@ def meteo_header():
     '''
     if os.getenv('MODE') == "PROD":
         TOKEN = get_valid_token()
+    if os.getenv('MODE') == "DEV":
+        TOKEN = get_valid_token_debugwindows()        
     if not TOKEN:
         raise ValueError("Pas de TOKEN METEO_FRANCE valide généré.")
     HEADERS = {"Authorization": f"Bearer {TOKEN}"}

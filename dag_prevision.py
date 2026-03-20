@@ -370,4 +370,6 @@ with DAG(
     results = process_batch.partial(cov_ids=cov_ids).expand(data=batches)
 
     #save_all(results)
-    archivage_historique()
+    #archivage_historique()
+
+    results >> archivage_historique()

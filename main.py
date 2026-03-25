@@ -8,6 +8,7 @@ from services.maj_meteo import get_save_meteo_hier as maj_meteo_quotidien
 from services.maj_meteo import import_meteo_previous_month as maj_meteo_mois_precedent
 from services.maj_production import get_save_production as maj_production_mois_precedent
 from services.get_forecast_new import update_forecast_db
+from services.get_forecast_old import maj_prevision
 import os
 import dotenv
 dotenv.load_dotenv(dotenv_path=".env.local")
@@ -71,17 +72,18 @@ def main(action=None):
 
     elif action == "MAJ_PREVISION":
         print("Récupération des prévisions météorologiques...")
-        update_forecast_db()
+        #update_forecast_db()
+        maj_prevision()
 
 if __name__ == "__main__":
     if os.getenv('MODE') == "DEV":
         #debug
-        #main("INIT")
+        main("INIT")
         #main("MAJ_STRUCTURES")
         #main("MAJ_PROD")
         #main("MAJ_METEO")
         #main("MAJ_METEO_PREC") 
-        main("MAJ_PREVISION")
+        #main("MAJ_PREVISION")
 
     if os.getenv('MODE') == "PROD":
          #prod

@@ -378,7 +378,7 @@ def save_unitaire(results):
     meteo.save_forecast_partiels(results, db.conn)    
 
 #@task
-def archive_historique():
+def archivage_historique():
     db = Database(
         host=os.getenv('DB_HOST'),
         dbname=os.getenv('DB_NAME'),
@@ -410,4 +410,4 @@ if __name__ == "__main__":
     results = process_batch(data_list=batches, cov_ids=cov_ids)
 
     #save_all(results)
-    archivage = archive_historique()
+    archivage_historique()

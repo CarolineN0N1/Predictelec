@@ -62,8 +62,12 @@ def iter_days(start_dt, end_dt, step_days=1):
         current += timedelta(days=step_days)
 
 # Calcul de la plage du mois précédent
-def get_previous_month_range():
-    today = datetime.now(timezone.utc) 
+def get_previous_month_range(date_ref=None):
+    if date_ref is None:
+        date_ref = datetime.now(timezone.utc)
+    else:
+        date_ref = datetime.fromisoformat(date_ref.replace("Z", "")).replace(tzinfo=timezone.utc) + pd.DateOffset(months=1)
+    today = date_ref 
     # premier jour du mois courant
     first_day_current_month = today.replace(
         day=1, hour=0, minute=0, second=0, microsecond=0
@@ -216,13 +220,14 @@ def get_commande_meteo(station,debut,fin,conn):
         print("Processus de récupération et de sauvegarde des données météo terminé.")
 
 
-def import_meteo_previous_month():
-    debut, fin = get_previous_month_range()
-    #jusqu'à la veille
-    today = datetime.now(timezone.utc)
-    fin = today.replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
+def import_meteo_previous_month(date_ref=None):
+    debut, fin = get_previous_month_range(date_ref=date_ref)
+    if date_ref==None:
+        #jusqu'à la veille
+        today = datetime.now(timezone.utc)            
+        fin = today.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
     db = Database(
         host=os.getenv('DB_HOST'),
